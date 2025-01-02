@@ -45,7 +45,7 @@ def threaded_video_capture(runtime):
 
     while True:
         try:
-            frame = frame_queue.get(timeout=1)
+            frame = frame_queue.get_nowait()
 
             if frame is not None:
                 cv2.imshow("Threaded Capture", frame)
@@ -55,7 +55,7 @@ def threaded_video_capture(runtime):
             main_iterations += 1
 
         except queue.Empty:
-            print("Queue is empty, no frames available.")
+            pass
 
         if time.time() - start_time > runtime:  # Stop after n seconds
             break

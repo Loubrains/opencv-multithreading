@@ -14,13 +14,12 @@ class VideoDisplayThread(threading.Thread):
     def run(self):
         while self.running:
             try:
-                frame = self.frame_queue.get(timeout=1)
+                frame = self.frame_queue.get_nowait()
                 if frame is not None:
                     cv2.imshow("Threaded Capture and Display", frame)
                     self.iterations += 1
             except queue.Empty:
-                print("Queue is empty, no frames to display.")
-                break
+                pass
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 self.running = False

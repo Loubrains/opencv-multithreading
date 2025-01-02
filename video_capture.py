@@ -18,10 +18,14 @@ class VideoCaptureThread(threading.Thread):
             if not ret:
                 break
 
-            self.frame_queue.put(frame)
+            try:
+                self.frame_queue.put_nowait(frame)
+            except queue.Full:
+                pass
+
             self.iterations += 1
 
     def stop(self):
         self.running = False
-        time.sleep(0.3)
+        time.sleep(0.1)
         self.cap.release()
