@@ -1,5 +1,6 @@
-import time
 import cv2
+import queue
+import time
 from video_capture import VideoCaptureThread
 from video_display import VideoDisplayThread
 from cpu_task import cpu_expensive_task
@@ -36,19 +37,25 @@ def single_threaded_video(runtime):
 
 # Scenario 2: Separate thread for video capture
 def threaded_video_capture(runtime):
-    video_thread = VideoCaptureThread()
+    frame_queue = queue.Queue(maxsize=1)
+    video_thread = VideoCaptureThread(frame_queue)
     video_thread.start()
     main_iterations = 0
     start_time = time.time()
 
     while True:
-        frame = video_thread.get_frame()
-        if frame is not None:
-            cv2.imshow("Threaded Capture", frame)
+        try:
+            frame = frame_queue.get(timeout=1)
 
-        # Perform the CPU-intensive task in the main thread
-        cpu_expensive_task()
-        main_iterations += 1
+            if frame is not None:
+                cv2.imshow("Threaded Capture", frame)
+
+            # Perform the CPU-intensive task in the main thread
+            cpu_expensive_task()
+            main_iterations += 1
+
+        except queue.Empty:
+            print("Queue is empty, no frames available.")
 
         if time.time() - start_time > runtime:  # Stop after n seconds
             break
@@ -66,8 +73,9 @@ def threaded_video_capture(runtime):
 
 # Scenario 3: Separate threads for video capture and display
 def fully_threaded_video(runtime):
-    video_thread = VideoCaptureThread()
-    display_thread = VideoDisplayThread(video_thread)
+    frame_queue = queue.Queue(maxsize=1)
+    video_thread = VideoCaptureThread(frame_queue)
+    display_thread = VideoDisplayThread(frame_queue)
 
     video_thread.start()
     display_thread.start()
@@ -95,7 +103,7 @@ def fully_threaded_video(runtime):
 
 
 if __name__ == "__main__":
-    runtime = 10  # Number of seconds to run each scenario
+    runtime = 3  # Number of seconds to run each scenario
 
     print("Scenario 1: Single-threaded video capture and display")
     single_threaded_video(runtime)

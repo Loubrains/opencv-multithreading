@@ -1,21 +1,26 @@
 import cv2
 import threading
 import time
+import queue
 
 
 class VideoDisplayThread(threading.Thread):
-    def __init__(self, video_thread):
+    def __init__(self, frame_queue: queue.Queue):
         super().__init__()
-        self.video_thread = video_thread
+        self.frame_queue = frame_queue
         self.running = True
         self.iterations = 0
 
     def run(self):
         while self.running:
-            frame = self.video_thread.get_frame()
-            if frame is not None:
-                cv2.imshow("Threaded Capture and Display", frame)
-                self.iterations += 1
+            try:
+                frame = self.frame_queue.get(timeout=1)
+                if frame is not None:
+                    cv2.imshow("Threaded Capture and Display", frame)
+                    self.iterations += 1
+            except queue.Empty:
+                print("Queue is empty, no frames to display.")
+                break
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 self.running = False

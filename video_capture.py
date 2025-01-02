@@ -1,15 +1,15 @@
 import cv2
 import threading
 import time
+import queue
 
 
 class VideoCaptureThread(threading.Thread):
-    def __init__(self):
+    def __init__(self, frame_queue: queue.Queue):
         super().__init__()
         self.cap = cv2.VideoCapture(0)
-        self.frame = None
+        self.frame_queue = frame_queue
         self.running = True
-        self.lock = threading.Lock()
         self.iterations = 0
 
     def run(self):
@@ -17,15 +17,11 @@ class VideoCaptureThread(threading.Thread):
             ret, frame = self.cap.read()
             if not ret:
                 break
-            with self.lock:
-                self.frame = frame
+
+            self.frame_queue.put(frame)
             self.iterations += 1
 
     def stop(self):
         self.running = False
-        time.sleep(0.1)
+        time.sleep(0.3)
         self.cap.release()
-
-    def get_frame(self):
-        with self.lock:
-            return self.frame
