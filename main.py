@@ -1,22 +1,8 @@
-import cv2
-import threading
 import time
-import numpy as np
-
-
-# CPU-intensive operation
-def cpu_expensive_task():
-    # Generate two large random matrices
-    matrix_a = np.random.rand(1000, 1000)
-    matrix_b = np.random.rand(1000, 1000)
-
-    # Perform matrix multiplication multiple times
-    for _ in range(5):  # Adjust the number of iterations for higher intensity
-        _ = np.dot(matrix_a, matrix_b)
-
-    # Perform an FFT on a large array
-    large_array = np.random.rand(1000000)
-    _ = np.fft.fft(large_array)
+import cv2
+from video_capture import VideoCaptureThread
+from video_display import VideoDisplayThread
+from cpu_task import cpu_expensive_task
 
 
 # Scenario 1: Single-threaded video capture and display
@@ -49,34 +35,6 @@ def single_threaded_video(runtime):
 
 
 # Scenario 2: Separate thread for video capture
-class VideoCaptureThread(threading.Thread):
-    def __init__(self):
-        super().__init__()
-        self.cap = cv2.VideoCapture(0)
-        self.frame = None
-        self.running = True
-        self.lock = threading.Lock()
-        self.iterations = 0
-
-    def run(self):
-        while self.running:
-            ret, frame = self.cap.read()
-            if not ret:
-                break
-            with self.lock:
-                self.frame = frame
-            self.iterations += 1
-
-    def stop(self):
-        self.running = False
-        time.sleep(0.1)
-        self.cap.release()
-
-    def get_frame(self):
-        with self.lock:
-            return self.frame
-
-
 def threaded_video_capture(runtime):
     video_thread = VideoCaptureThread()
     video_thread.start()
@@ -107,30 +65,6 @@ def threaded_video_capture(runtime):
 
 
 # Scenario 3: Separate threads for video capture and display
-class VideoDisplayThread(threading.Thread):
-    def __init__(self, video_thread):
-        super().__init__()
-        self.video_thread = video_thread
-        self.running = True
-        self.iterations = 0
-
-    def run(self):
-        while self.running:
-            frame = self.video_thread.get_frame()
-            if frame is not None:
-                cv2.imshow("Threaded Capture and Display", frame)
-                self.iterations += 1
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self.running = False
-                break
-
-    def stop(self):
-        self.running = False
-        time.sleep(0.1)
-        cv2.destroyAllWindows()
-
-
 def fully_threaded_video(runtime):
     video_thread = VideoCaptureThread()
     display_thread = VideoDisplayThread(video_thread)
@@ -161,23 +95,7 @@ def fully_threaded_video(runtime):
 
 
 if __name__ == "__main__":
-
     runtime = 10  # Number of seconds to run each scenario
-
-    # print("Choose a scenario:")
-    # print("1: Single-threaded video capture and display")
-    # print("2: Threaded video capture, display in main thread")
-    # print("3: Fully threaded video capture and display")
-    # choice = input("Enter your choice (1/2/3): ").strip()
-
-    # if choice == "1":
-    #     single_threaded_video(runtime)
-    # elif choice == "2":
-    #     threaded_video_capture(runtime)
-    # elif choice == "3":
-    #     fully_threaded_video(runtime)
-    # else:
-    #     print("Invalid choice.")
 
     print("Scenario 1: Single-threaded video capture and display")
     single_threaded_video(runtime)
