@@ -37,8 +37,7 @@ def single_threaded_video(runtime):
 
 # Scenario 2: Separate thread for video capture, display in the main thread
 def threaded_video_capture(runtime):
-    lock = threading.Lock()
-    capture_thread = VideoCaptureThread(lock)
+    capture_thread = VideoCaptureThread()
     capture_thread.start()
     main_iterations = 0
     start_time = time.time()
@@ -105,8 +104,7 @@ def threaded_video_display(runtime):
 
 # Scenario 4: Separate threads for video capture and display
 def fully_threaded_video(runtime):
-    lock = threading.Lock()
-    capture_thread = VideoCaptureThread(lock)
+    capture_thread = VideoCaptureThread()
     display_thread = VideoDisplayThread(capture_thread.get_frame)
 
     capture_thread.start()
@@ -137,7 +135,7 @@ def fully_threaded_video(runtime):
 if __name__ == "__main__":
     runtime = 10  # Number of seconds to run each scenario
 
-    print(f"Runtime: {runtime} seconds")
+    print(f"Runtime per scenario: {runtime} seconds")
     print("\nScenario 1: Single-threaded video capture and display")
     single_threaded_video(runtime)
     print("\nScenario 2: Threaded video capture, display in main thread")

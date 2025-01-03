@@ -4,12 +4,12 @@ import time
 
 
 class VideoCaptureThread(threading.Thread):
-    def __init__(self, lock: threading.Lock):
+    def __init__(self):
         super().__init__()
         self.cap = cv2.VideoCapture(0)
         self.frame = None
         self.running = True
-        self.lock = lock
+        self.lock = threading.Lock()
         self.iterations = 0
 
     def run(self):
