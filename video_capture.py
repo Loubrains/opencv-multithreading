@@ -32,6 +32,4 @@ class VideoCaptureThread(threading.Thread):
             frame = self.frame
             self.lock.release()
             return frame
-        else:
-            print("Capture thread: Lock acquisition failed")
         return None
