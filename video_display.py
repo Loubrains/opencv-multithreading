@@ -1,24 +1,24 @@
 import cv2
 import threading
+from collections import deque
 import time
-import queue
 
 
 class VideoDisplayThread(threading.Thread):
-    def __init__(self, frame_queue: queue.Queue):
+    def __init__(self, frame_deque: deque):
         super().__init__()
-        self.frame_queue = frame_queue
+        self.frame_queue = frame_deque
         self.running = True
         self.iterations = 0
 
     def run(self):
         while self.running:
             try:
-                frame = self.frame_queue.get_nowait()
+                frame = self.frame_queue.pop()
                 if frame is not None:
                     cv2.imshow("Threaded Capture and Display", frame)
                     self.iterations += 1
-            except queue.Empty:
+            except IndexError:
                 pass
 
             if cv2.waitKey(1) & 0xFF == ord("q"):

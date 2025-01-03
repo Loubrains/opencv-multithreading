@@ -1,14 +1,14 @@
 import cv2
 import threading
+from collections import deque
 import time
-import queue
 
 
 class VideoCaptureThread(threading.Thread):
-    def __init__(self, frame_queue: queue.Queue):
+    def __init__(self, frame_deque: deque):
         super().__init__()
         self.cap = cv2.VideoCapture(0)
-        self.frame_queue = frame_queue
+        self.frame_deque = frame_deque
         self.running = True
         self.iterations = 0
 
@@ -18,11 +18,7 @@ class VideoCaptureThread(threading.Thread):
             if not ret:
                 break
 
-            try:
-                self.frame_queue.put_nowait(frame)
-            except queue.Full:
-                pass
-
+            self.frame_deque.append(frame)
             self.iterations += 1
 
     def stop(self):

@@ -1,5 +1,5 @@
 import cv2
-import queue
+from collections import deque
 import time
 from video_capture import VideoCaptureThread
 from video_display import VideoDisplayThread
@@ -37,25 +37,25 @@ def single_threaded_video(runtime):
 
 # Scenario 2: Separate thread for video capture
 def threaded_video_capture(runtime):
-    frame_queue = queue.Queue(maxsize=1)
-    video_thread = VideoCaptureThread(frame_queue)
+    frame_deque = deque(maxlen=1)
+    video_thread = VideoCaptureThread(frame_deque)
     video_thread.start()
     main_iterations = 0
     start_time = time.time()
 
     while True:
         try:
-            frame = frame_queue.get_nowait()
+            frame = frame_deque.pop()
 
             if frame is not None:
                 cv2.imshow("Threaded Capture", frame)
 
-            # Perform the CPU-intensive task in the main thread
-            cpu_expensive_task()
-            main_iterations += 1
-
-        except queue.Empty:
+        except IndexError:
             pass
+
+        # Perform the CPU-intensive task in the main thread
+        cpu_expensive_task()
+        main_iterations += 1
 
         if time.time() - start_time > runtime:  # Stop after n seconds
             break
@@ -71,11 +71,50 @@ def threaded_video_capture(runtime):
     print(f"Capture thread iterations: {video_thread.iterations}")
 
 
-# Scenario 3: Separate threads for video capture and display
+# Scenario 3: Threaded video display, capture in the main thread
+def threaded_video_display(runtime):
+    frame_deque = deque(maxlen=1)
+    display_thread = VideoDisplayThread(frame_deque)
+    display_thread.start()
+
+    cap = cv2.VideoCapture(0)
+    main_iterations = 0
+    start_time = time.time()
+
+    while display_thread.running:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame_deque.append(frame)
+
+        # Perform the CPU-intensive task in the main thread
+        cpu_expensive_task()
+        main_iterations += 1
+
+        if time.time() - start_time > runtime:  # Stop after n seconds
+            display_thread.running = False
+            break
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            display_thread.running = False
+            break
+
+    cap.release()
+    display_thread.stop()
+    display_thread.join()
+
+    cv2.destroyAllWindows()
+
+    print(f"Main thread iterations: {main_iterations}")
+    print(f"Display thread iterations: {display_thread.iterations}")
+
+
+# Scenario 4: Separate threads for video capture and display
 def fully_threaded_video(runtime):
-    frame_queue = queue.Queue(maxsize=1)
-    video_thread = VideoCaptureThread(frame_queue)
-    display_thread = VideoDisplayThread(frame_queue)
+    frame_deque = deque(maxlen=1)
+    video_thread = VideoCaptureThread(frame_deque)
+    display_thread = VideoDisplayThread(frame_deque)
 
     video_thread.start()
     display_thread.start()
@@ -103,11 +142,14 @@ def fully_threaded_video(runtime):
 
 
 if __name__ == "__main__":
-    runtime = 3  # Number of seconds to run each scenario
+    runtime = 10  # Number of seconds to run each scenario
+    print("Runtime per scenario:", runtime, "seconds")
 
-    print("Scenario 1: Single-threaded video capture and display")
+    print("\nScenario 1: Single-threaded video capture and display")
     single_threaded_video(runtime)
     print("\nScenario 2: Threaded video capture, display in main thread")
     threaded_video_capture(runtime)
-    print("\nScenario 3: Fully threaded video capture and display")
+    print("\nScenario 3: Threaded video display, capture in main thread")
+    threaded_video_display(runtime)
+    print("\nScenario 4: Fully threaded video capture and display")
     fully_threaded_video(runtime)
