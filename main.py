@@ -95,7 +95,7 @@ def fully_threaded_video(runtime):
 
 
 if __name__ == "__main__":
-    runtime = 10  # Number of seconds to run each scenario
+    runtime = 3  # Number of seconds to run each scenario
 
     print("Scenario 1: Single-threaded video capture and display")
     single_threaded_video(runtime)

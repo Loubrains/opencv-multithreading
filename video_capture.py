@@ -17,9 +17,10 @@ class VideoCaptureThread(threading.Thread):
             ret, frame = self.cap.read()
             if not ret:
                 break
-            with self.lock:
+            if self.lock.acquire(blocking=False):
                 self.frame = frame
-            self.iterations += 1
+                self.iterations += 1
+                self.lock.release()
 
     def stop(self):
         self.running = False
@@ -27,5 +28,8 @@ class VideoCaptureThread(threading.Thread):
         self.cap.release()
 
     def get_frame(self):
-        with self.lock:
-            return self.frame
+        if self.lock.acquire(blocking=False):
+            frame = self.frame
+            self.lock.release()
+            return frame
+        return None

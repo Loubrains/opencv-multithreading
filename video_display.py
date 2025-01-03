@@ -1,10 +1,11 @@
 import cv2
 import threading
 import time
+from video_capture import VideoCaptureThread
 
 
 class VideoDisplayThread(threading.Thread):
-    def __init__(self, video_thread):
+    def __init__(self, video_thread: VideoCaptureThread):
         super().__init__()
         self.video_thread = video_thread
         self.running = True
