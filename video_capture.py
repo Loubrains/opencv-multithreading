@@ -4,12 +4,12 @@ import time
 
 
 class VideoCaptureThread(threading.Thread):
-    def __init__(self):
+    def __init__(self, lock: threading.Lock):
         super().__init__()
         self.cap = cv2.VideoCapture(0)
         self.frame = None
         self.running = True
-        self.lock = threading.Lock()
+        self.lock = lock
         self.iterations = 0
 
     def run(self):
@@ -32,4 +32,6 @@ class VideoCaptureThread(threading.Thread):
             frame = self.frame
             self.lock.release()
             return frame
+        else:
+            print("Capture thread: Lock acquisition failed")
         return None

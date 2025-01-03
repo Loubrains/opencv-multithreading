@@ -1,21 +1,21 @@
 import cv2
 import threading
 import time
-from video_capture import VideoCaptureThread
 
 
 class VideoDisplayThread(threading.Thread):
-    def __init__(self, video_thread: VideoCaptureThread):
+    def __init__(self, get_frame_function):
         super().__init__()
-        self.video_thread = video_thread
+        self.get_frame = get_frame_function
         self.running = True
         self.iterations = 0
 
     def run(self):
         while self.running:
-            frame = self.video_thread.get_frame()
+            frame = self.get_frame()
+
             if frame is not None:
-                cv2.imshow("Threaded Capture and Display", frame)
+                cv2.imshow("Threaded Display", frame)
                 self.iterations += 1
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
