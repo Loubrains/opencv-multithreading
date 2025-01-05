@@ -3,6 +3,7 @@ import threading
 import time
 from video_capture import VideoCaptureThread
 from video_display import VideoDisplayThread
+from video_capture_display import VideoCaptureDisplayThread
 from cpu_task import cpu_expensive_task
 
 
@@ -132,6 +133,31 @@ def fully_threaded_video(runtime):
     print(f"Display thread iterations: {display_thread.iterations}")
 
 
+# Scenario 5: Combined video capture and display in a seperate thread
+def capture_display_thread(runtime):
+    cap_display_thread = VideoCaptureDisplayThread()
+
+    cap_display_thread.start()
+
+    main_iterations = 0
+    start_time = time.time()
+
+    while cap_display_thread.running:
+        # Perform the CPU-intensive task in the main thread
+        cpu_expensive_task()
+        main_iterations += 1
+
+        if time.time() - start_time > runtime:  # Stop after n seconds
+            cap_display_thread.running = False
+            break
+
+    cap_display_thread.stop()
+    cap_display_thread.join()
+
+    print(f"Main thread iterations: {main_iterations}")
+    print(f"Capture thread iterations: {cap_display_thread.iterations}")
+
+
 if __name__ == "__main__":
     runtime = 10  # Number of seconds to run each scenario
 
@@ -144,3 +170,5 @@ if __name__ == "__main__":
     threaded_video_display(runtime)
     print("\nScenario 4: Fully threaded video capture and display")
     fully_threaded_video(runtime)
+    print("\nScenario 5: Combined video capture and display in a seperate thread")
+    capture_display_thread(runtime)
